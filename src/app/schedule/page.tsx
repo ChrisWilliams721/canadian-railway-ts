@@ -3,12 +3,26 @@ import Modal from "@/components/modal";
 import moment from "moment";
 import Nav from "@/components/navbar";
 import React, { useState, FormEvent, useEffect } from "react";
-import { Calendar, momentLocalizer, Views } from "react-big-calendar";
-import "react-big-calendar/lib/css/react-big-calendar.css";
+// import { Calendar, momentLocalizer, Views } from "react-big-calendar";
+// import "react-big-calendar/lib/css/react-big-calendar.css";
+import { useNextCalendarApp, ScheduleXCalendar, useCalendarApp } from "@schedule-x/react";
+import {
+  CalendarApp,
+  createViewDay,
+  createViewMonthAgenda,
+  createViewMonthGrid,
+  createViewWeek,
+} from '@schedule-x/calendar'
+import { createEventsServicePlugin } from '@schedule-x/events-service'
+import '@schedule-x/theme-default/dist/index.css'
+ 
+// import '@schedule-x/theme-default/dist/index.css'
 import TaskDetailsModal from "@/components/detailsModal";
+import { config } from "process";
+import { Views } from "react-big-calendar";
 
 // Initialize the localizer with moment
-const localizer = momentLocalizer(moment);
+// const localizer = momentLocalizer(moment);
 
 type task = {
   id: number;
@@ -35,6 +49,8 @@ export default function Schedule() {
     start: new Date(),
     end: new Date(),
   });
+
+  const plugins = [createEventsServicePlugin()]
 
   // Fetch tasks from the API
   useEffect(() => {
@@ -151,18 +167,47 @@ export default function Schedule() {
   };
 
   // Transform tasks for the calendar
-  const calendarTasks = tasks.map((task) => ({
-    id: task.id,
-    title: task.title,
-    start: new Date(task.start_date), // Use start date and time
-    end: new Date(task.end_date), // Use end date and time
-    description: task.description,
-    assigned_to: task.assigned_to,
-    status: task.status,
-    priority: task.priority, // Include priority in the event object
-    due_date: task.due_date
-  }));
+  // const calendarTasks = tasks.map((task) => ({
+  //   id: task.id,
+  //   title: task.title,
+  //   start: new Date(task.start_date).toISOString(), // Use start date and time
+  //   end: new Date(task.end_date).toISOString(), // Use end date and time
+  //   description: task.description,
+  //   assigned_to: task.assigned_to,
+  //   status: task.status,
+  //   priority: task.priority, // Include priority in the event object
+  //   due_date: task.due_date
+  // }));
 
+  const formatDate = (date: Date): string => {
+    return date.toISOString().split("T")[0];
+  };
+
+  // const calendar: CalendarApp = useCalendarApp({
+  //   views: [createViewDay(), createViewWeek(), createViewMonthGrid(), createViewMonthAgenda()],
+  //   events: calendarTasks,
+  //   selectedDate: formatDate(selectedRange.start),
+  // });
+  const calendar = useCalendarApp({
+    views: [
+      createViewDay(), // For daily view
+      createViewWeek(), // For weekly view
+      createViewMonthAgenda(), // For monthly agenda view
+      createViewMonthGrid(), // For monthly grid view
+    ],
+    events: tasks.map(task => ({
+      id: task.id,
+      title: task.title,
+      start: new Date(task.start_date).toISOString(),
+      end: new Date(task.end_date).toISOString(),
+      description: task.description,
+      assigned_to: task.assigned_to,
+      priority: task.priority,
+      status: task.status,
+    })),
+
+    selectedDate: formatDate(selectedRange.start),
+  });
   
 
   if (loading) {
@@ -190,7 +235,6 @@ export default function Schedule() {
               Manage Users
             </button>
           </div>
-
           {/* Modal for adding a task */}
           <Modal
             isOpen={isModalOpen}
@@ -198,31 +242,10 @@ export default function Schedule() {
             onAddTask={handleAddTask}
           />
 
-          {/* Modal for task details */}
-          {selectedTask && (
-            <TaskDetailsModal
-              isOpen={isDetailsModalOpen}
-              onClose={() => setIsDetailsModalOpen(false)}
-              task={selectedTask}
-              onDelete={handleDeleteTask}
-            />
-          )}
-        </div>
-
-        {/* Calendar Component */}
-        <div className="mt-8 h-[600px]">
-          <Calendar
-            localizer={localizer}
-            events={calendarTasks}
-            startAccessor="start"
-            endAccessor="end"
-            selectable
-            onSelectEvent={handleSelectEvent}
-            onSelectSlot={handleSelectSlot}
-            defaultView={Views.MONTH}
-            views={[Views.MONTH, Views.WEEK, Views.DAY]}
-          />
-        </div>
+            <div>
+              <ScheduleXCalendar calendarApp={calendar} />
+            </div>
+          </div>
 
         {/* Task Table */}
         <div className="mt-8">
