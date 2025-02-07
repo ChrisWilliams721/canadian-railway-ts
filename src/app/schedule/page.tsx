@@ -124,10 +124,8 @@ export default function Schedule() {
       ...prevTasks,
       {
         ...createdTask,
-        start: new Date(
-          createdTask.start_date
-        ),
-        end: new Date(createdTask.end_date),
+        start: new Date(`${createdTask.start_date}T${createdTask.start_time}`),
+        end: new Date(`${createdTask.end_date}T${createdTask.end_time}`),
       },
     ]);
 
@@ -185,7 +183,15 @@ export default function Schedule() {
 
   // const calendar: CalendarApp = useCalendarApp({
   //   views: [createViewDay(), createViewWeek(), createViewMonthGrid(), createViewMonthAgenda()],
-  //   events: calendarTasks,
+  //   events: [{
+  //     id: 1,
+  //     title: 'Meeting',
+  //     start: '2025-02-07 10:00',
+  //     end: '2025-02-08 12:00',
+  //     description: 'Meeting description',
+  //     assigned_to: 1,
+  //     priority: 'High',
+  //   }],
   //   selectedDate: formatDate(selectedRange.start),
   // });
   const calendar = useCalendarApp({
@@ -198,8 +204,8 @@ export default function Schedule() {
     events: tasks.map(task => ({
       id: task.id,
       title: task.title,
-      start: new Date(task.start_date).toISOString(),
-      end: new Date(task.end_date).toISOString(),
+      start:  `${task.start_date} ${task.start_time}`,
+      end: `${task.end_date} ${task.end_time}`,
       description: task.description,
       assigned_to: task.assigned_to,
       priority: task.priority,
