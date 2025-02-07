@@ -49,8 +49,7 @@ export default function Schedule() {
     start: new Date(),
     end: new Date(),
   });
-
-  const plugins = [createEventsServicePlugin()]
+  const eventsService = useState(() => createEventsServicePlugin())[0]
 
   // Fetch tasks from the API
   useEffect(() => {
@@ -124,8 +123,8 @@ export default function Schedule() {
       ...prevTasks,
       {
         ...createdTask,
-        start: new Date(`${createdTask.start_date}T${createdTask.start_time}`),
-        end: new Date(`${createdTask.end_date}T${createdTask.end_time}`),
+        start: new Date(`${createdTask.start_date}`),
+        end: new Date(`${createdTask.end_date}`),
       },
     ]);
 
@@ -181,39 +180,40 @@ export default function Schedule() {
     return date.toISOString().split("T")[0];
   };
 
-  // const calendar: CalendarApp = useCalendarApp({
-  //   views: [createViewDay(), createViewWeek(), createViewMonthGrid(), createViewMonthAgenda()],
-  //   events: [{
-  //     id: 1,
-  //     title: 'Meeting',
-  //     start: '2025-02-07 10:00',
-  //     end: '2025-02-08 12:00',
-  //     description: 'Meeting description',
-  //     assigned_to: 1,
-  //     priority: 'High',
-  //   }],
-  //   selectedDate: formatDate(selectedRange.start),
-  // });
-  const calendar = useCalendarApp({
-    views: [
-      createViewDay(), // For daily view
-      createViewWeek(), // For weekly view
-      createViewMonthAgenda(), // For monthly agenda view
-      createViewMonthGrid(), // For monthly grid view
-    ],
-    events: tasks.map(task => ({
-      id: task.id,
-      title: task.title,
-      start:  `${task.start_date} ${task.start_time}`,
-      end: `${task.end_date} ${task.end_time}`,
-      description: task.description,
-      assigned_to: task.assigned_to,
-      priority: task.priority,
-      status: task.status,
-    })),
-
+  const calendar: CalendarApp = useCalendarApp({
+    views: [createViewDay(), createViewWeek(), createViewMonthGrid(), createViewMonthAgenda()],
+    events: [{
+      id: 1,
+      title: 'Meeting',
+      start: '2025-02-07 10:00',
+      end: '2025-02-08 12:00',
+      description: 'Meeting description',
+      assigned_to: 1,
+      priority: 'High',
+    }],
+    plugins: [eventsService, ],
     selectedDate: formatDate(selectedRange.start),
   });
+  // const calendar = useCalendarApp({
+  //   views: [
+  //     createViewDay(), // For daily view
+  //     createViewWeek(), // For weekly view
+  //     createViewMonthAgenda(), // For monthly agenda view
+  //     createViewMonthGrid(), // For monthly grid view
+  //   ],
+  //   events: tasks.map(task => ({
+  //     id: task.id,
+  //     title: task.title,
+  //     start: `${task.start_date.split('T')[0]} ${task.start_time}`,
+  //     end: `${task.end_date.split('T')[0]} ${task.end_time}`,
+  //     description: task.description,
+  //     assigned_to: task.assigned_to,
+  //     priority: task.priority,
+  //     status: task.status,
+  //   })),
+
+  //   selectedDate: formatDate(selectedRange.start),
+  // });
   
 
   if (loading) {
