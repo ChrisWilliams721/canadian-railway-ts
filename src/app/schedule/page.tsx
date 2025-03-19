@@ -40,7 +40,7 @@ export default function Schedule() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
-  const [trackCoordinates, setTrackCoordinates] = useState<{ [key: string]: [number, number][] }>({});
+  const [viewMode, setViewMode] = useState("calendar"); // Default view mode
   const eventsService = useState(() => createEventsServicePlugin())[0];
 
   useEffect(() => {
@@ -168,21 +168,20 @@ const handleAddTask = async (
   }
   
 
-  const newTask = {
-    title,
-    description,
-    status,
-    assigned_to: assignedTo,
-    created_by: "Admin",
-    due_date,
-    start_date: startDate,
-    start_time: startTime,
-    end_date: endDate,
-    end_time: endTime,
-    priority,
-    track_id: trackId, // Save the track ID
-    coordinates: [midpoint], // Save the midpoint
-  };
+    const newTask = {
+      title,
+      description,
+      status,
+      assigned_to: assignedTo,
+      created_by: "Admin",
+      due_date,
+      start_date: startDate,
+      start_time: startTime,
+      end_date: endDate,
+      end_time: endTime,
+      priority,
+      track_Id: trackID,
+    };
 
   try {
     const response = await fetch("/api/tasks", {
@@ -237,7 +236,12 @@ const handleAddTask = async (
   }, [tasks]);
 
   const calendar = useNextCalendarApp({
-    views: [createViewDay(), createViewWeek(), createViewMonthGrid(), createViewMonthAgenda()],
+    views: [
+      createViewDay(),
+      createViewWeek(),
+      createViewMonthGrid(),
+      createViewMonthAgenda(),
+    ],
     defaultView: "week",
     events,
     plugins: [eventsService],
@@ -259,21 +263,38 @@ const handleAddTask = async (
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
       </div>
     );
-  } else {
-    return (
-      <div className="flex" >
-        <Nav />
-        <div className="flex justify-end p-4">
+  }
+
+  return (
+    <div className="flex">
+      <Nav />
+      <div className="bg-black text-white w-full min-h-screen px-6 mt-4">
+        {/* Header */}
+        <div className="flex justify-between items-center mb-4">
           <button
-            className="bg-blue-600 w-32 h-10 rounded-full cursor-pointer hover:bg-blue-500"
+            className="bg-blue-600 px-6 py-2 rounded-full cursor-pointer hover:bg-blue-500"
             onClick={() => setIsModalOpen(true)}
           >
             Schedule
           </button>
+          <button
+            className="bg-gray-700 px-6 py-2 rounded-full cursor-pointer hover:bg-gray-600"
+            onClick={() =>
+              setViewMode(viewMode === "calendar" ? "table" : "calendar")
+            }
+          >
+            {viewMode === "calendar"
+              ? "Switch to Table View"
+              : "Switch to Calendar View"}
+          </button>
         </div>
 
         {/* Modal for adding a task */}
-        <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} onAddTask={handleAddTask} />
+        <Modal
+          isOpen={isModalOpen}
+          onClose={() => setIsModalOpen(false)}
+          onAddTask={handleAddTask}
+        />
 
         {/* Modal for task details */}
         {selectedTask && (
@@ -284,50 +305,56 @@ const handleAddTask = async (
             onDelete={handleDeleteTask}
           />
         )}
-        <div className=" text-white min-h-screen p-6 w-full max-h-12"> 
-        {/* Schedule-X Calendar */}
-        <div className="sx-react-calendar-wrapper w-full h-[600px] mt-4">
-          <ScheduleXCalendar calendarApp={calendar} />
-        </div>
 
-        {/* Task Table */}
-        <div className="mt-8">
-          <h1 className="text-2xl font-bold mb-4 text-white">Scheduled Tasks</h1>
-          <table className="border-collapse border border-gray-800 w-full ">
-            <thead>
-              <tr>
-                <th className="border border-gray-800">Order ID</th>
-                <th className="border border-gray-800">Track ID</th>
-                <th className="border border-gray-800">Status</th>
-                <th className="border border-gray-800">Title</th>
-                <th className="border border-gray-800">Description</th>
-                <th className="border border-gray-800">Start Date</th>
-                <th className="border border-gray-800">End Date</th>
-                <th className="border border-gray-800">Assigned To</th>
-                <th className="border border-gray-800">Priority</th>
-                <th className="border border-gray-800">Midpoint Coordinates</th>
-              </tr>
-            </thead>
-            <tbody>
-              {tasks.map((task) => (
-                <tr key={task.id}>
-                  <td className="border border-gray-300">#{task.id}</td>
-                  <td className="border border-gray-300">#{task.track_id}</td>
-                  <td className="border border-gray-300">{task.status}</td>
-                  <td className="border border-gray-300">{task.title}</td>
-                  <td className="border border-gray-300">{task.description}</td>
-                  <td className="border border-gray-300">{task.start_date}</td>
-                  <td className="border border-gray-300">{task.end_date}</td>
-                  <td className="border border-gray-300">{task.assigned_to}</td>
-                  <td className="border border-gray-300">{task.priority}</td>
-                  <td>{task.coordinates ? JSON.stringify(task.coordinates) : "N/A"}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+        {/* Dynamic View */}
+        {viewMode === "calendar" ? (
+          <div className="sx-react-calendar-wrapper w-full h-[600px] mt-4">
+            <ScheduleXCalendar calendarApp={calendar} />
           </div>
-        </div>
+        ) : (
+          <div className="mt-8">
+            <h1 className="text-2xl font-bold mb-4 text-white">
+              Scheduled Tasks
+            </h1>
+            <table className="border-collapse border border-gray-800 w-full">
+              <thead>
+                <tr>
+                  <th className="border border-gray-800">Order ID</th>
+                  <th className="border border-gray-800">Track ID</th>
+                  <th className="border border-gray-800">Status</th>
+                  <th className="border border-gray-800">Title</th>
+                  <th className="border border-gray-800">Description</th>
+                  <th className="border border-gray-800">Start Date</th>
+                  <th className="border border-gray-800">End Date</th>
+                  <th className="border border-gray-800">Assigned To</th>
+                  <th className="border border-gray-800">Priority</th>
+                </tr>
+              </thead>
+              <tbody>
+                {tasks.map((task) => (
+                  <tr key={task.id}>
+                    <td className="border border-gray-300">#{task.id}</td>
+                    <td className="border border-gray-300">#{task.track_id}</td>
+                    <td className="border border-gray-300">{task.status}</td>
+                    <td className="border border-gray-300">{task.title}</td>
+                    <td className="border border-gray-300">
+                      {task.description}
+                    </td>
+                    <td className="border border-gray-300">
+                      {task.start_date}
+                    </td>
+                    <td className="border border-gray-300">{task.end_date}</td>
+                    <td className="border border-gray-300">
+                      {task.assigned_to}
+                    </td>
+                    <td className="border border-gray-300">{task.priority}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
-    );
-  }
+    </div>
+  );
 }
